@@ -25,7 +25,10 @@
             android:layout_marginRight="55dp"
             android:background="@drawable/chatto_bg_focused"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:id="@+id/left_content"
+            android:padding="10dp"
+            >
             <View
                 android:id="@+id/pointright"
                 android:layout_centerHorizontal="true"
@@ -62,7 +65,10 @@
             android:layout_marginLeft="55dp"
             android:background="@drawable/chatfrom_bg_focused"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:id="@+id/right_content"
+            android:padding="10dp"
+            >
             <View
                 android:id="@+id/pointleft"
                 android:background="@android:color/black"

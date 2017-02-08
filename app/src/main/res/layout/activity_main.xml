@@ -13,7 +13,7 @@
         >
     </ListView>
 
-    <com.xiangzi.qq_list.BallView
+    <com.xiangzi.qq_list.BallGroup
         android:id="@+id/list"
         android:background="@android:color/transparent"
         android:dividerHeight= "10dp"

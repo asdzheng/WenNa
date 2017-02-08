@@ -4,19 +4,23 @@ import android.app.Activity;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.View;
+import android.widget.AbsListView;
+import android.widget.AbsListView.OnScrollListener;
 import android.widget.Button;
 import android.widget.ListView;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public class MainActivity extends Activity {
 
-	BallView list;
+	BallGroup list;
 	ChatAdapter chatAdapter ;
 	List<Chat> chatlist = new ArrayList<Chat>();
-	List<Point> pointList = new ArrayList<Point>();
+	List<Point> pointList = new LinkedList<Point>();
 	Button btn ;
 
 	ListView listView;
@@ -40,17 +44,17 @@ public class MainActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		list=(BallView) findViewById(R.id.list);
+		list=(BallGroup) findViewById(R.id.list);
 		listView = (ListView) findViewById(R.id.lv);
 		DisplayMetrics displayMetrics = new DisplayMetrics();
 		getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-		int x= (int)(displayMetrics.widthPixels);
-		pointList.add(new Point(120 , 50));
-		pointList.add(new Point(x - 140 ,250));
-		pointList.add(new Point(x - 180 ,450));
-		pointList.add(new Point(100 , 650));
-		pointList.add(new Point(x - 140 , 800));
-		pointList.add(new Point(x - 160 , (int)(displayMetrics.heightPixels)+40));
+		final int x= (int)(displayMetrics.widthPixels);
+//		pointList.add(new Point(120 , 50));
+//		pointList.add(new Point(x - 140 ,250));
+//		pointList.add(new Point(x - 180 ,450));
+//		pointList.add(new Point(100 , 650));
+//		pointList.add(new Point(x - 140 , 800));
+//		pointList.add(new Point(x - 160 , (int)(displayMetrics.heightPixels)+40));
 
 		for (int i = 0;i<14;i++){
 			Chat chat = new Chat();
@@ -73,6 +77,44 @@ public class MainActivity extends Activity {
 				list.initMovables(pointList);
 			}
 		});
+
+		listView.setOnScrollListener(new OnScrollListener() {
+			@Override
+			public void onScrollStateChanged(AbsListView view, int scrollState) {
+
+			}
+
+			@Override
+			public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+				if(visibleItemCount > 0) {
+					pointList.clear();
+					Log.w("onScroll", "firstVisibleItem = " + firstVisibleItem + " | visibleItemCount = " + visibleItemCount);
+
+					for(int i = firstVisibleItem; i < visibleItemCount + firstVisibleItem; i++) {
+						View itemView = view.getChildAt(i);
+						View contentView ;
+
+						if(chatlist.get(i).chatfrom == 0) {
+							contentView = itemView.findViewById(R.id.pointleft);
+						} else {
+							contentView = itemView.findViewById(R.id.pointright);
+						}
+
+						final int[] location = new int[2];
+						contentView.getLocationInWindow(location);
+						int x = location[0]  ;
+						int y = location[1]  ;
+
+						Point point = new Point(new Point(x, y));
+						pointList.add(point);
+
+						Log.w("onScroll", "x = " + point.x + " | y = " + point.y);
+					}
+				}
+
+			}
+		});
+
 		listView.setAdapter(chatAdapter);
 	}
 
