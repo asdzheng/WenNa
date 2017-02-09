@@ -1,11 +1,9 @@
 package com.xiangzi.qq_list;
 
 import android.content.Context;
-import android.graphics.Point;
 import android.util.AttributeSet;
 import android.widget.FrameLayout;
-
-import java.util.List;
+import android.widget.ListView;
 
 /**
  * Created by 郑加波 on 2017/2/7.
@@ -28,13 +26,13 @@ public class BallGroup extends FrameLayout {
         super(context, attrs, defStyle);
     }
 
-    public void initMovables(List<Point> pointList) {
+    public void initMovables(ListView listView) {
         BallView view = new BallView(getContext());
         view.setLayoutParams(new LayoutParams(80, 80));
         view.setImageResource(R.drawable.huaji);
         addView(view);
 
-        view.initMovables(pointList);
+        view.initMovables(listView);
     }
 
 }

@@ -5,8 +5,11 @@ import android.graphics.Canvas;
 import android.graphics.Point;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.View;
 import android.widget.ImageView;
+import android.widget.ListView;
 
+import java.util.LinkedList;
 import java.util.List;
 
 
@@ -56,106 +59,141 @@ public class BallView extends ImageView {
         super(context, attrs, defStyle);
     }
 
-    public void initMovables(List<Point> pointList) {
-        this.pointList = pointList;
-        requestFocus();
-        GROUND_INDEX = 0;
-        startX = pointList.get(GROUND_INDEX).x - getWidth()/2;
-        startY = pointList.get(GROUND_INDEX).y;
-        bt = new BallThread();
-        bt.start();
+    private ListView listView;
+
+    int startItem;
+
+    public void initMovables(ListView listView) {
+        if (listView == null) {
+            throw new IllegalArgumentException("listvie is null");
+        }
+
+        if (listView.getChildCount() > 0) {
+            this.listView = listView;
+            initPointList();
+
+            requestFocus();
+            GROUND_INDEX = 0;
+            startX = pointList.get(GROUND_INDEX).x - getWidth() / 2;
+            startY = pointList.get(GROUND_INDEX).y - getHeight();
+            bt = new BallThread();
+            bt.start();
+        }
+    }
+
+
+    private void initPointList() {
+        pointList = new LinkedList<Point>();
+        int first = listView.getFirstVisiblePosition();
+
+        for(int i = first ; i <= listView.getLastVisiblePosition(); i++) {
+            View itemView = listView.getChildAt(i);
+
+            if (itemView == null) {
+                return;
+            }
+
+            View contentView;
+
+            if (((Chat)listView.getAdapter().getItem(i)).chatfrom == 0) {
+                contentView = itemView.findViewById(R.id.pointleft);
+            } else {
+                contentView = itemView.findViewById(R.id.pointright);
+            }
+
+            final int[] location = new int[2];
+            contentView.getLocationInWindow(location);
+            int x = location[0];
+            int y = location[1];
+
+            Point point = new Point(new Point(x, y));
+            pointList.add(point);
+
+            Log.w("onScroll", "x = " + point.x + " | y = " + point.y);
+        }
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         Log.w("BallView", "onDraw x = " + currentX + " | y = " + currentY);
-        offsetLeftAndRight(currentX - getLeft());
-        offsetTopAndBottom(currentY - getTop());
+        offsetLeftAndRight(currentX - getLeft() - getWidth() / 2);
+        offsetTopAndBottom(currentY - getTop() - getHeight());
         super.onDraw(canvas);
     }
-//
-//    @Override
-//    public void computeScroll() {
-//        if (!isFinish) {
-//            Log.w("computeScroll", " x = " + currentX + " | y = " + currentY);
-////            bt.run();
-//
-////            invalidate();
-//        }
-//    }
 
     public class BallThread extends Thread {
         boolean flag = false; //一次小球运动标志
         double current;//实时时间
-        public BallThread(){
+
+        public BallThread() {
             timeX = System.nanoTime();
             this.flag = true;
         }
 
-        public void run(){
-            while(GROUND_INDEX < pointList.size()-1){
+        public void run() {
+            while (GROUND_INDEX < pointList.size() - 1) {
                 flag = true;
-                startVY = -(float)(1200);
-                double t1 = -startVY/g; //V=V0+g*t  V=0 ,则t=-V0/g
-                double s = (startVY*t1+0.5*g*t1*t1);
-                double t2 =Math.sqrt(((2*(pointList.get(GROUND_INDEX+1).y-startY+(Math.abs(s))))/g));
-                double t = t1+t2;
-                startVX = (float)((pointList.get(GROUND_INDEX+1).x-startX)/(t));
+                startVY = -(float) (1200);
+                double t1 = -startVY / g; //V=V0+g*t  V=0 ,则t=-V0/g
+                double s = (startVY * t1 + 0.5 * g * t1 * t1);
+                double t2 = Math.sqrt(((2 * (pointList.get(GROUND_INDEX + 1).y - startY + (Math.abs(s)))) / g));
+                double t = t1 + t2;
+                startVX = (float) ((pointList.get(GROUND_INDEX + 1).x - startX) / (t));
                 currentVX = startVX;
                 currentX = startX;
                 currentY = startY;
                 postInvalidate();
 
-                while(flag){
+                while (flag) {
                     current = System.nanoTime();
-                    double timeSpanX = (double)((current -  timeX)/1000/1000/1000);
-                    currentX = (int)(startX +  currentVX * timeSpanX);
-                    if( bFall){
-                        double timeSpanY = (double)((current -  timeY)/1000/1000/1000);
-                        currentY = (int)( startY +  startVY * timeSpanY + timeSpanY * timeSpanY * g/2);
-                        currentVY = (float)( startVY + g * timeSpanY);
-                        if( startVY < 0 && Math.abs( currentVY) <= BallView.UP_ZERO){
+                    double timeSpanX = (double) ((current - timeX) / 1000 / 1000 / 1000);
+                    currentX = (int) (startX + currentVX * timeSpanX);
+                    if (bFall) {
+                        double timeSpanY = (double) ((current - timeY) / 1000 / 1000 / 1000);
+                        currentY = (int) (startY + startVY * timeSpanY + timeSpanY * timeSpanY * g / 2);
+                        currentVY = (float) (startVY + g * timeSpanY);
+                        if (startVY < 0 && Math.abs(currentVY) <= BallView.UP_ZERO) {
                             timeY = System.nanoTime();
                             currentVY = 0;
                             startVY = 0;
-                            startY =  currentY;
+                            startY = currentY;
                         }
-                        if( currentY +  getHeight() >= pointList.get(GROUND_INDEX+1).y &&  currentVY > 0){
+                        if (currentY + getHeight() >= pointList.get(GROUND_INDEX + 1).y && currentVY > 0) {
                             //到达目标坐标点，开始弹跳
-                            currentVX =  currentVX * ( impactFactoryX);//速度衰减
-                            currentVY = 0 -  currentVY * ( impactFactoryY);
+                            currentVX = currentVX * (impactFactoryX);//速度衰减
+                            currentVY = 0 - currentVY * (impactFactoryY);
 
-                            if(Math.abs( currentVY) < BallView.DOWN_ZERO){
+                            if (Math.abs(currentVY) < BallView.DOWN_ZERO) {
                                 //当速度衰减到最小速度以后，小球落地，运动结束
-                                try{
+                                try {
                                     Thread.sleep(100);
-                                }catch(Exception e){
+                                } catch (Exception e) {
                                     e.printStackTrace();
                                 }
                                 this.flag = false;
-                                System.out.println("线程结束"+GROUND_INDEX);
+                                System.out.println("线程结束" + GROUND_INDEX);
                                 GROUND_INDEX++;
-                            }else{
+                            } else {
                                 startX = (int) currentX;
                                 timeX = System.nanoTime();
-                                startY =  currentY;
+                                startY = currentY;
                                 timeY = System.nanoTime();
-                                startVY =  currentVY;
+                                startVY = currentVY;
                             }
                         }
-                    }else {
-                        if( currentVY == 0 ||  currentVY > 0){
+                    } else {
+                        if (currentVY == 0 || currentVY > 0) {
                             timeY = System.nanoTime();
                             bFall = true;//bFall参数用来判断是否进行S2的自由落体运动
-                        }else{
-                            currentVY = (int)( startVY + g * timeSpanX);
-                            currentY = (int)( currentY +  startVY * timeSpanX + timeSpanX * timeSpanX * g/2);
+                        } else {
+                            currentVY = (int) (startVY + g * timeSpanX);
+                            currentY = (int) (currentY + startVY * timeSpanX + timeSpanX * timeSpanX * g / 2);
                         }
                     }
-                    try{
+                    try {
                         Thread.sleep(12);
                         postInvalidate();
-                    }catch(Exception e){
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
