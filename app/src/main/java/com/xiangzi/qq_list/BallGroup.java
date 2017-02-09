@@ -2,8 +2,11 @@ package com.xiangzi.qq_list;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ListView;
+
+import com.xiangzi.qq_list.BallView.OnEndAnimatorListener;
 
 /**
  * Created by 郑加波 on 2017/2/7.
@@ -11,7 +14,7 @@ import android.widget.ListView;
  * @description :
  */
 
-public class BallGroup extends FrameLayout {
+public class BallGroup extends FrameLayout implements OnEndAnimatorListener {
 
 
     public BallGroup(Context Activity) {
@@ -32,7 +35,11 @@ public class BallGroup extends FrameLayout {
         view.setImageResource(R.drawable.huaji);
         addView(view);
 
-        view.initMovables(listView);
+        view.initMovables(listView, this);
     }
 
+    @Override
+    public void endListener(View view) {
+        removeView(view);
+    }
 }
